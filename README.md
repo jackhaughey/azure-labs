@@ -6,7 +6,7 @@
 
 
 ## Directory Structure
-
+```
 └── azure-labs
     ├── 01-hub-and-spoke-network
     │   ├── bicep
@@ -21,4 +21,4 @@
     └── 04-vmss-autoscaling
         ├── bicep
         └── terraform
-
+```
