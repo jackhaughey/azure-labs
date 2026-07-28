@@ -29,6 +29,15 @@ resource vnetHub 'Microsoft.Network/virtualNetworks@2025‑07‑01' = {
           addressPrefix: '10.0.2.0/24'
         }
       }
+      // -----------------------------
+      // GatewaySubnet (required for VPN Gateway)
+      // -----------------------------
+      {
+        name: 'GatewaySubnet'
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+        }
+      }
     ]
   }
 }
@@ -91,6 +100,84 @@ resource firewall 'Microsoft.Network/azureFirewalls@2025‑07‑01' = {
         }
       }
     ]
+  }
+}
+
+// -----------------------------
+// VPN Gateway Public IP
+// -----------------------------
+resource pipVpn 'Microsoft.Network/publicIPAddresses@2025‑07‑01' = {
+  name: 'pip-vpn-hub'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Dynamic'
+  }
+}
+
+// -----------------------------
+// VPN Gateway (Route-Based)
+// -----------------------------
+resource vpnGw 'Microsoft.Network/virtualNetworkGateways@2025‑07‑01' = {
+  name: 'vpngw-hub'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'gw-ipconfig'
+        properties: {
+          subnet: {
+            id: vnetHub.properties.subnets[2].id // GatewaySubnet
+          }
+          publicIPAddress: {
+            id: pipVpn.id
+          }
+        }
+      }
+    ]
+    gatewayType: 'Vpn'
+    vpnType: 'RouteBased'
+    enableBgp: false
+    sku: {
+      name: 'VpnGw1'
+      tier: 'VpnGw1'
+    }
+  }
+}
+
+// -----------------------------
+// Local Network Gateway (Simulated On-Prem)
+// -----------------------------
+resource lng 'Microsoft.Network/localNetworkGateways@2025‑07‑01' = {
+  name: 'lng-onprem'
+  location: location
+  properties: {
+    gatewayIpAddress: '52.52.52.52' // fake on-prem public IP
+    localNetworkAddressSpace: {
+      addressPrefixes: [
+        '192.168.0.0/24' // fake on-prem LAN
+      ]
+    }
+  }
+}
+
+// -----------------------------
+// VPN Connection (IPsec)
+// -----------------------------
+resource vpnConnection 'Microsoft.Network/connections@2025‑07‑01' = {
+  name: 'hub-to-onprem'
+  location: location
+  properties: {
+    connectionType: 'IPsec'
+    virtualNetworkGateway1: {
+      id: vpnGw.id
+    }
+    localNetworkGateway2: {
+      id: lng.id
+    }
+    sharedKey: 'MySecretKey123'
   }
 }
 
@@ -170,6 +257,7 @@ resource hubToSpoke 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
     }
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: true
+    allowGatewayTransit: true // IMPORTANT for VPN Gateway usage
   }
 }
 
@@ -184,5 +272,6 @@ resource spokeToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
       id: vnetHub.id
     }
     allowVirtualNetworkAccess: true
+    useRemoteGateways: true // IMPORTANT for VPN Gateway usage
   }
 }
