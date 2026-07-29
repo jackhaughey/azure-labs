@@ -13,7 +13,7 @@ resource "azurerm_log_analytics_workspace" "law" {
 
 
 ###############################################################################
-# SECTION 2: Monitoring Solutions (VMInsights, ContainerInsights, etc.)
+# SECTION 2: Monitoring
 ###############################################################################
 
 resource "azurerm_log_analytics_solution" "solutions" {
