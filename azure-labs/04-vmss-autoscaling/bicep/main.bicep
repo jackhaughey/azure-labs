@@ -6,7 +6,7 @@
 param location string = resourceGroup().location
 param vmssName string = 'vmss-web'
 param adminUsername string = 'azureuser'
-@secure()
+@secure() // Marks the parameter as secure
 param adminPassword string
 
 // ------------------------------------------------------------
