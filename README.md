@@ -1,4 +1,4 @@
-Both IaC implementations deploy the same architecture so you can compare syntax, structure, and design approaches across tools.
+Both IaC implementations (Bicep and Terraform) deploy the same architecture so you can compare syntax, structure, and design approaches across tools.
 
 ---
 
